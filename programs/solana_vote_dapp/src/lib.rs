@@ -23,4 +23,15 @@ pub mod solana_vote_dapp {
 
         Ok(())
     }
+
+    pub fn buy_tokens(ctx: Context<InitializeTreasury>) -> Result<()>{
+        //1. user will transfer sol to sol vault
+        //2. token transfer from treasury token account to buyer_token_account
+        //3. X mint token
+        //4. treasury_config_account -- sol price and token amount to transfer
+        
+
+        Ok(())
+
+    }
 }
