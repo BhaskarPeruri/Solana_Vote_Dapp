@@ -4,6 +4,8 @@ mod state;
 use contexts::*;
 
 declare_id!("8hGms4xTeARJT5s4BhUuXzgzySBHBR8944f73XF7hojL");
+use anchor_spl::token::{mint_to, MintTo};
+use anchor_lang::system_program;
 
 #[program]
 pub mod solana_vote_dapp {
@@ -24,12 +26,37 @@ pub mod solana_vote_dapp {
         Ok(())
     }
 
-    pub fn buy_tokens(ctx: Context<InitializeTreasury>) -> Result<()>{
-        //1. user will transfer sol to sol vault
-        //2. token transfer from treasury token account to buyer_token_account
+    pub fn buy_tokens(ctx: Context<BuyTokens>) -> Result<()>{
+        //1. buyer will transfer sol from buyer  to sol vault
+        let treasury_config_account = &mut ctx.accounts.treasury_config_account;
+        let sol = treasury_config_account.sol_price;
+        let token_amount = treasury_config_account.tokens_per_purchase;
+        let transfer_ix = anchor_lang::system_program::Transfer{
+            from:ctx.accounts.buyer.to_account_info(),
+            to:ctx.accounts.sol_vault.to_account_info(),
+        };
+        system_program::transfer(
+            CpiContext::new(ctx.accounts.system_program.to_account_info(), transfer_ix),
+            sol,
+        )?;
+          
+        //2. mint tokens to buyer_token_account
+        let mint_authority_seeds = &[b"mint_authority".as_ref(), &[ctx.bumps.mint_authority]];
+        let signer_seeds = &[&mint_authority_seeds[..]];
+
+        let cpi_accounts = MintTo{
+            mint:ctx.accounts.x_mint.to_account_info(),
+            to:ctx.accounts.buyer_token_account.to_account_info(),
+            authority:ctx.accounts.mint_authority.to_account_info(),
+        };
+
+        let cpi_ctx  = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            cpi_accounts,
+            signer_seeds,
+        );
         //3. X mint token
-        //4. treasury_config_account -- sol price and token amount to transfer
-        
+        mint_to(cpi_ctx, token_amount)?;        
 
         Ok(())
 
