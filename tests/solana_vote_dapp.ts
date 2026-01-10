@@ -80,7 +80,6 @@ describe("1. Initialization", () => {
     const solPrice = new anchor.BN(1_000_000_000);
     const tokenPerPurchase = new  anchor.BN(1_000_000_000);
 
-    console.log("Treasury Config PDA", treasuryConfigPda.toBase58());
 
 
     // Add your test here.
@@ -103,15 +102,27 @@ describe("1. Initialization", () => {
 })
 
 describe("2. Buy Tokens", () => {
-  it("should buy tokens", async () => {
+  it("2.1  buy tokens", async () => {
+
+    const tokenBalanceBefore = (await getAccount(connection, proposalCreatorTokenAccount)).amount;
+    console.log("Token balance before:", tokenBalanceBefore);
     await program.methods.buyTokens().accounts({
       buyer: proposalCreatorWallet.publicKey,
       treasuryTokenAccount: treasuryTokenAccount,
   buyerTokenAccount: proposalCreatorTokenAccount,
   xMint: xMintPda,
     }).signers([proposalCreatorWallet]).rpc();
+
+    const tokenBalanceAfter = (await getAccount(connection, proposalCreatorTokenAccount)).amount;
+    console.log("Token Balance After", tokenBalanceAfter);
+
+    expect(tokenBalanceAfter-tokenBalanceBefore).to.equal(BigInt(1_000_000_000));
+
+
   });
+
 });
+
 
 });
 
